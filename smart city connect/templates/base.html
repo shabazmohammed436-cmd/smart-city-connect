@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartCity Connect{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <a class="skip-link" href="#main">Skip to content</a>
+    {% if current_user.is_authenticated %}
+    <div class="demo-banner" role="note">
+        College hackathon prototype — not connected to real municipal authorities.
+        Sample complaints are labelled <strong>Demo data</strong>.
+    </div>
+    {% endif %}
+    <header class="site-header">
+        <div class="container nav-wrap">
+            <a class="brand" href="{{ url_for('index') if not current_user.is_authenticated else url_for('complaints.home_redirect') }}">
+                <span class="logo" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" width="36" height="36">
+                        <rect x="1" y="1" width="46" height="46" rx="12" fill="#0b3d91"/>
+                        <path d="M10 32h6v-8h4v8h6V22l-8-7-8 7v10z" fill="#14b8a6"/>
+                        <circle cx="34" cy="16" r="7" fill="#f8fafc"/>
+                        <path d="M34 11.5c-2 0-3.5 1.5-3.5 3.4 0 2.6 3.5 6.1 3.5 6.1s3.5-3.5 3.5-6.1c0-1.9-1.5-3.4-3.5-3.4zm0 4.6a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4z" fill="#0b3d91"/>
+                    </svg>
+                </span>
+                <span>
+                    <strong>SmartCity Connect</strong>
+                    <small>Report It. Track It. Improve Your City.</small>
+                </span>
+            </a>
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+            <nav id="site-nav" class="site-nav">
+                {% if current_user.is_authenticated %}
+                    {% if current_user.role == 'citizen' %}
+                        <a href="{{ url_for('complaints.dashboard') }}">Dashboard</a>
+                        <a href="{{ url_for('complaints.my_complaints') }}">My Complaints</a>
+                    {% endif %}
+                    {% if current_user.role == 'admin' %}
+                        <a href="{{ url_for('admin.dashboard') }}">Admin</a>
+                        <a href="{{ url_for('admin.worker_dashboard') }}">Worker view</a>
+                    {% endif %}
+                    {% if current_user.role == 'worker' %}
+                        <a href="{{ url_for('admin.worker_dashboard') }}">My assignments</a>
+                    {% endif %}
+                    <a href="{{ url_for('complaints.city_map') }}">Map</a>
+                    <a class="bell" href="{{ url_for('notifications.inbox') }}" aria-label="Notifications">
+                        Bell
+                        {% if unread_count %}
+                        <span class="badge" id="unread-badge">{{ unread_count }}</span>
+                        {% else %}
+                        <span class="badge hidden" id="unread-badge">0</span>
+                        {% endif %}
+                    </a>
+                    <a class="btn btn-ghost" href="{{ url_for('auth.logout') }}">Log out</a>
+                {% else %}
+                    <a href="{{ url_for('auth.welcome') }}">Welcome</a>
+                    <a href="{{ url_for('auth.login') }}">Log in</a>
+                    <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Sign up</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main id="main">
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-list" role="status">
+                        {% for category, message in messages %}
+                            <div class="flash flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div>
+                <strong>SmartCity Connect</strong>
+                <p>A college hackathon prototype for reporting local infrastructure issues and tracking their status.</p>
+            </div>
+            <div>
+                <p>Not an official municipal website. Demo data is fictional and labelled as demonstration records.</p>
+                <p>In-app notifications are included. Email and browser push alerts need extra setup.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

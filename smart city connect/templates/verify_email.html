@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Verify email | SmartCity Connect{% endblock %}
+{% block content %}
+<section class="auth-card card">
+    <h1>Verify your email</h1>
+    <p>We need to confirm <strong>{{ user.email }}</strong> before you can use the dashboard.</p>
+    {% if mail_configured %}
+        <p>If SMTP is working, check your inbox for a 6-digit code.</p>
+    {% else %}
+        <div class="callout warn">
+            <strong>Development-only verification</strong>
+            <p>Email delivery is not configured on this computer. No email was sent. Enter the code shown below.</p>
+            {% if shown_code %}
+                <p class="otp">{{ shown_code }}</p>
+            {% endif %}
+        </div>
+    {% endif %}
+    {% if mail_configured and shown_code %}
+        <div class="callout warn">
+            <p>SMTP could not send the message. Development-only code:</p>
+            <p class="otp">{{ shown_code }}</p>
+        </div>
+    {% endif %}
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="code">6-digit code</label>
+        <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
+        <button class="btn btn-primary" type="submit">Verify</button>
+    </form>
+    <form method="post" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="resend">
+        <button class="btn btn-ghost" type="submit">Get a new code</button>
+    </form>
+</section>
+{% endblock %}

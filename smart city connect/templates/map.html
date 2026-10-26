@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}City map | SmartCity Connect{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+{% block content %}
+<section class="page-heading">
+    <div>
+        <h1>Smart city map</h1>
+        <p>Markers appear only where coordinates were recorded. Citizens see their own complaints. Personal contact details are not shown.</p>
+    </div>
+</section>
+<form class="card filters" method="get">
+    <label for="category">Category</label>
+    <select id="category" name="category">
+        <option value="">All</option>
+        {% for key, item in categories.items() %}
+        <option value="{{ key }}" {% if selected_category == key %}selected{% endif %}>{{ item.label }}</option>
+        {% endfor %}
+    </select>
+    <label for="status">Status</label>
+    <select id="status" name="status">
+        <option value="">All</option>
+        {% for status in statuses %}
+        <option value="{{ status }}" {% if selected_status == status %}selected{% endif %}>{{ status }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn btn-primary" type="submit">Apply filters</button>
+</form>
+<div id="city-map" class="city-map"></div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const markers = {{ markers | tojson }};
+    const map = L.map("city-map").setView([17.385, 78.4867], 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+    const group = [];
+    markers.forEach(function (item) {
+        const marker = L.marker([item.lat, item.lng]).addTo(map);
+        marker.bindPopup(
+            "<strong>" + item.public_id + "</strong><br>" +
+            item.category + " · " + item.status +
+            (item.is_demo ? "<br>Demo data" : "") +
+            "<br>" + item.title
+        );
+        group.push(marker);
+    });
+    if (group.length) {
+        map.fitBounds(L.featureGroup(group).getBounds().pad(0.2));
+    }
+</script>
+{% endblock %}

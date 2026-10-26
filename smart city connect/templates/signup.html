@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Sign up | SmartCity Connect{% endblock %}
+{% block content %}
+<section class="auth-card card">
+    <h1>Create your citizen account</h1>
+    <p>Use a password with at least 8 characters, including letters and numbers.</p>
+    <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="full_name">Full name</label>
+        <input id="full_name" name="full_name" required maxlength="120" autocomplete="name">
+
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" required maxlength="255" autocomplete="email">
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password">
+
+        <label for="confirm_password">Confirm password</label>
+        <input id="confirm_password" name="confirm_password" type="password" required minlength="8" autocomplete="new-password">
+
+        <button class="btn btn-primary" type="submit">Sign up</button>
+    </form>
+    <p class="muted">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+</section>
+{% endblock %}

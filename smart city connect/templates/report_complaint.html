@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Report {{ category.label }} | SmartCity Connect{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+{% block content %}
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">Guided report</p>
+        <h1>{{ category.label }}</h1>
+        <p>Complete each step, then review before submitting. You can upload a file if the camera is unavailable.</p>
+    </div>
+</section>
+
+<ol class="steps" id="wizard-steps">
+    <li class="active">Photo</li>
+    <li>Location</li>
+    <li>Details</li>
+    <li>Review</li>
+</ol>
+
+<form id="complaint-form" class="card wizard" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="submission_token" value="{{ csrf_token() }}{{ now.timestamp() }}">
+    <input type="hidden" name="latitude" id="latitude">
+    <input type="hidden" name="longitude" id="longitude">
+    <input type="hidden" name="location_source" id="location_source" value="manual">
+    <input type="hidden" name="capture_time" id="capture_time">
+
+    <section class="step-panel" data-step="0">
+        <h2>Step A: Photograph</h2>
+        <p>We request camera permission only after you tap Start camera. If that fails, upload a photo instead.</p>
+        <div class="camera-box">
+            <video id="camera-preview" autoplay playsinline muted></video>
+            <canvas id="camera-canvas" hidden></canvas>
+            <img id="photo-preview" alt="Photograph preview" hidden>
+        </div>
+        <p id="camera-status" class="muted" role="status"></p>
+        <div class="button-row">
+            <button class="btn btn-secondary" type="button" id="start-camera">Start camera</button>
+            <button class="btn btn-primary" type="button" id="capture-photo" disabled>Capture photograph</button>
+            <button class="btn btn-ghost" type="button" id="retake-photo" disabled>Retake</button>
+        </div>
+        <label for="photo">Or upload a photograph</label>
+        <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required>
+        <p class="muted">JPG, PNG, or WEBP. Maximum size 5 MB. The original is stored separately from the watermarked copy.</p>
+    </section>
+
+    <section class="step-panel hidden" data-step="1">
+        <h2>Step B: Location</h2>
+        <p>We request location permission only after you tap Use my location. You can type the address yourself if GPS is denied.</p>
+        <div class="button-row">
+            <button class="btn btn-secondary" type="button" id="use-location">Use my location</button>
+        </div>
+        <p id="location-status" class="muted" role="status">Coordinates are not recorded until you capture them or leave them blank.</p>
+        <div id="mini-map" class="mini-map hidden" aria-label="Map preview"></div>
+        <label for="address">Address or nearby landmark</label>
+        <input id="address" name="address" required maxlength="255" placeholder="Example: Opposite City Library, Ward 4">
+        <p class="muted">{% if nominatim_enabled %}Address lookup is enabled.{% else %}Automatic address lookup is off. Enter the address manually.{% endif %}</p>
+    </section>
+
+    <section class="step-panel hidden" data-step="2">
+        <h2>Step D: Additional details</h2>
+        <label>Complaint category</label>
+        <input value="{{ category.label }}" readonly>
+        <label for="title">Complaint title</label>
+        <input id="title" name="title" required maxlength="160" placeholder="Short title">
+        <label for="description">Detailed description</label>
+        <textarea id="description" name="description" required minlength="10" rows="5" placeholder="What is wrong, and why does it matter?"></textarea>
+        <label for="notes">Optional notes</label>
+        <textarea id="notes" name="notes" rows="3"></textarea>
+    </section>
+
+    <section class="step-panel hidden" data-step="3">
+        <h2>Step E: Review and submit</h2>
+        <p>Check these details before sending. The photograph will be watermarked with SmartCity Connect, date/time, coordinates if available, and category. Capture time is recorded only if the camera provided it; upload time is recorded separately.</p>
+        <dl class="review" id="review-box"></dl>
+        <p id="submit-status" class="hidden loading-text">Saving your complaint...</p>
+        <button class="btn btn-primary" id="submit-btn" type="submit">Submit complaint</button>
+    </section>
+
+    <div class="button-row wizard-nav">
+        <button class="btn btn-ghost" type="button" id="prev-step" hidden>Back</button>
+        <button class="btn btn-primary" type="button" id="next-step">Continue</button>
+    </div>
+</form>
+{% endblock %}
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script src="{{ url_for('static', filename='js/location.js') }}"></script>
+<script>
+    window.SCC = {
+        nominatimEnabled: {{ 'true' if nominatim_enabled else 'false' }},
+        reverseUrl: "{{ url_for('complaints.reverse_geocode') }}",
+        csrfToken: "{{ csrf_token() }}"
+    };
+</script>
+{% endblock %}

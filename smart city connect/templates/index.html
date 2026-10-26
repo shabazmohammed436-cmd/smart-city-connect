@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}SmartCity Connect{% endblock %}
+{% block body_class %}splash-page{% endblock %}
+{% block content %}
+<section class="splash" aria-label="Welcome splash">
+    <div class="splash-card">
+        <div class="logo splash-logo" aria-hidden="true">
+            <svg viewBox="0 0 48 48" width="72" height="72">
+                <rect x="1" y="1" width="46" height="46" rx="12" fill="#0b3d91"/>
+                <path d="M10 32h6v-8h4v8h6V22l-8-7-8 7v10z" fill="#14b8a6"/>
+                <circle cx="34" cy="16" r="7" fill="#f8fafc"/>
+                <path d="M34 11.5c-2 0-3.5 1.5-3.5 3.4 0 2.6 3.5 6.1 3.5 6.1s3.5-3.5 3.5-6.1c0-1.9-1.5-3.4-3.5-3.4zm0 4.6a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4z" fill="#0b3d91"/>
+            </svg>
+        </div>
+        <h1>SmartCity Connect</h1>
+        <p class="tagline">Report It. Track It. Improve Your City.</p>
+        <div class="loader" aria-hidden="true"></div>
+        <p class="muted">Loading your local complaint desk...</p>
+        <a class="btn btn-primary" href="{{ url_for('auth.welcome') }}">Continue</a>
+    </div>
+</section>
+<script>
+    setTimeout(function () {
+        window.location.href = "{{ url_for('auth.welcome') }}";
+    }, 2200);
+</script>
+{% endblock %}

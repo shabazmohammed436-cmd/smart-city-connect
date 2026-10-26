@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Welcome | SmartCity Connect{% endblock %}
+{% block content %}
+<section class="hero card">
+    <p class="eyebrow">College hackathon prototype</p>
+    <h1>Help your city notice problems sooner.</h1>
+    <p class="lead">SmartCity Connect lets citizens report potholes, overflowing garbage, water leaks, and broken streetlights, then track what happens next.</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Create an account</a>
+        <a class="btn btn-secondary" href="{{ url_for('auth.login') }}">Log in</a>
+    </div>
+</section>
+
+<section class="grid-3">
+    <article class="card">
+        <h2>1. Report</h2>
+        <p>Take a photo, add a location, and describe the issue. The app saves a unique complaint ID.</p>
+    </article>
+    <article class="card">
+        <h2>2. Track</h2>
+        <p>Follow status changes from Pending to Assigned, In Progress, Resolved, or Reopened.</p>
+    </article>
+    <article class="card">
+        <h2>3. Improve</h2>
+        <p>Administrators and workers manage the queue. This prototype is not linked to a real city office.</p>
+    </article>
+</section>
+
+<section class="card permission-card">
+    <h2>Camera and location permissions</h2>
+    <p>The website asks for camera access only when you start the camera to photograph a problem. It asks for location only when you tap “Use my location”.</p>
+    <p>If you deny a permission, you can still use the site by uploading a photo from your files and typing an address.</p>
+</section>
+{% endblock %}

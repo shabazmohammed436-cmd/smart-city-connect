@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Administrator dashboard | SmartCity Connect{% endblock %}
+{% block content %}
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">Protected administrator area</p>
+        <h1>All complaints</h1>
+        <p>Server-side permission checks protect this page. This is a hackathon prototype, not a live municipal desk.</p>
+    </div>
+</section>
+<section class="stats-grid">
+    <article class="card stat"><span>Total</span><strong>{{ counts.total }}</strong></article>
+    <article class="card stat"><span>Pending</span><strong>{{ counts.pending }}</strong></article>
+    <article class="card stat"><span>Assigned</span><strong>{{ counts.assigned }}</strong></article>
+    <article class="card stat"><span>In progress</span><strong>{{ counts.progress }}</strong></article>
+    <article class="card stat"><span>Resolved</span><strong>{{ counts.resolved }}</strong></article>
+    <article class="card stat"><span>Demo records</span><strong>{{ counts.demo }}</strong></article>
+</section>
+<form class="card filters" method="get">
+    <label for="q">Search ID or address</label>
+    <input id="q" name="q" value="{{ q }}" placeholder="SCC-... or street name">
+    <label for="category">Category</label>
+    <select id="category" name="category">
+        <option value="">All</option>
+        {% for key, item in categories.items() %}
+        <option value="{{ key }}" {% if selected_category == key %}selected{% endif %}>{{ item.label }}</option>
+        {% endfor %}
+    </select>
+    <label for="status">Status</label>
+    <select id="status" name="status">
+        <option value="">All</option>
+        {% for status in statuses %}
+        <option value="{{ status }}" {% if selected_status == status %}selected{% endif %}>{{ status }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn btn-primary" type="submit">Filter</button>
+</form>
+<p class="muted">{{ ai.label }}. {{ ai_summary.reason }}</p>
+<div class="table-wrap card">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th>Source</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td class="mono">{{ item.public_id }}</td>
+                <td>{{ item.category_label }}</td>
+                <td>{{ item.address }}</td>
+                <td><span class="status status-{{ item.status|replace(' ', '-')|lower }}">{{ item.status }}</span></td>
+                <td>{% if item.is_demo %}Demo data{% else %}User submission{% endif %}</td>
+                <td><a href="{{ url_for('admin.complaint_admin', public_id=item.public_id) }}">Manage</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">No complaints match these filters.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

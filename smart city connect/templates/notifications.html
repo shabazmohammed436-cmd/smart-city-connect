@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Notifications | SmartCity Connect{% endblock %}
+{% block content %}
+<section class="page-heading">
+    <div>
+        <h1>Notifications</h1>
+        <p>In-app alerts from real complaint events. Email and browser push are not enabled in this local prototype.</p>
+    </div>
+    <form method="post" action="{{ url_for('notifications.mark_all_read') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-ghost" type="submit">Mark all as read</button>
+    </form>
+</section>
+{% if items %}
+<ul class="notice-list">
+    {% for item in items %}
+    <li class="card {% if not item.is_read %}unread{% endif %}">
+        <h2>{{ item.title }}</h2>
+        <p>{{ item.message }}</p>
+        <p class="muted">{{ item.created_at.strftime('%d %b %Y, %H:%M UTC') }}</p>
+        {% if not item.is_read %}
+        <form method="post" action="{{ url_for('notifications.mark_read', note_id=item.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-secondary" type="submit">Mark read</button>
+        </form>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<section class="card"><p>No notifications yet.</p></section>
+{% endif %}
+{% endblock %}

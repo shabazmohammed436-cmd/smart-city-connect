@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Worker dashboard | SmartCity Connect{% endblock %}
+{% block content %}
+<section class="page-heading">
+    <div>
+        <h1>Assigned work</h1>
+        <p>You can update Assigned or In Progress, and submit resolution evidence. Administrator tools stay hidden from worker-only accounts.</p>
+    </div>
+</section>
+{% if items %}
+<div class="complaint-list">
+    {% for item in items %}
+    <article class="card complaint-card">
+        <img src="{{ url_for('complaints.media', folder='complaints', filename=item.watermarked_photo or item.original_photo) }}" alt="">
+        <div>
+            <p class="mono">{{ item.public_id }} {% if item.is_demo %}<span class="tag">Demo data</span>{% endif %}</p>
+            <h2>{{ item.title }}</h2>
+            <p>{{ item.address }}</p>
+            <p class="status status-{{ item.status|replace(' ', '-')|lower }}">{{ item.status }}</p>
+            <a class="btn btn-primary" href="{{ url_for('admin.worker_complaint', public_id=item.public_id) }}">Open assignment</a>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<section class="card"><p>No complaints are assigned to you yet.</p></section>
+{% endif %}
+{% endblock %}

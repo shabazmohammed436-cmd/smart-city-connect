@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}{{ complaint.public_id }} | SmartCity Connect{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+{% block content %}
+{% if submitted %}
+<section class="card success-banner">
+    <h1>Complaint submitted</h1>
+    <p>Your complaint ID is <strong class="mono">{{ complaint.public_id }}</strong>. Save this ID to track progress.</p>
+</section>
+{% endif %}
+
+<section class="page-heading">
+    <div>
+        <p class="mono">{{ complaint.public_id }} {% if complaint.is_demo %}<span class="tag">Demo data</span>{% endif %}</p>
+        <h1>{{ complaint.title }}</h1>
+        <p>{{ complaint.category_label }}</p>
+    </div>
+    <p class="status status-{{ complaint.status|replace(' ', '-')|lower }}">{{ complaint.status }}</p>
+</section>
+
+<ol class="tracker" aria-label="Progress tracker">
+    {% for status in statuses %}
+    <li class="{% if complaint.status == status %}current{% endif %} {% if statuses.index(status) <= statuses.index(complaint.status) %}done{% endif %}">{{ status }}</li>
+    {% endfor %}
+</ol>
+
+<div class="detail-grid">
+    <article class="card">
+        <h2>Photographs</h2>
+        <p>Original photograph</p>
+        <img class="detail-photo" src="{{ url_for('complaints.media', folder='complaints', filename=complaint.original_photo) }}" alt="Original complaint photograph">
+        {% if complaint.watermarked_photo %}
+        <p>Watermarked copy</p>
+        <img class="detail-photo" src="{{ url_for('complaints.media', folder='complaints', filename=complaint.watermarked_photo) }}" alt="Watermarked complaint photograph">
+        {% endif %}
+        {% if complaint.resolution_photo %}
+        <p>Resolution evidence submitted by staff (not independently verified proof)</p>
+        <img class="detail-photo" src="{{ url_for('complaints.media', folder='resolutions', filename=complaint.resolution_photo) }}" alt="Resolution evidence photograph">
+        {% endif %}
+    </article>
+    <article class="card">
+        <h2>Details</h2>
+        <p>{{ complaint.description }}</p>
+        <p><strong>Address:</strong> {{ complaint.address }}</p>
+        {% if complaint.notes %}<p><strong>Notes:</strong> {{ complaint.notes }}</p>{% endif %}
+        <p><strong>Submitted:</strong> {{ complaint.created_at.strftime('%d %b %Y, %H:%M UTC') }}</p>
+        <p><strong>Capture time:</strong> {{ complaint.capture_time.strftime('%d %b %Y, %H:%M UTC') if complaint.capture_time else 'Not recorded' }}</p>
+        <p><strong>Upload time:</strong> {{ complaint.upload_time.strftime('%d %b %Y, %H:%M UTC') }}</p>
+        <p><strong>Coordinates:</strong>
+            {% if complaint.has_coordinates %}
+                {{ '%.5f'|format(complaint.latitude) }}, {{ '%.5f'|format(complaint.longitude) }}
+                ({{ complaint.location_source }})
+            {% else %}
+                Not recorded
+            {% endif %}
+        </p>
+        {% if complaint.resolution_note %}<p><strong>Resolution note:</strong> {{ complaint.resolution_note }}</p>{% endif %}
+        {% if complaint.resolution_at %}<p><strong>Resolution time:</strong> {{ complaint.resolution_at.strftime('%d %b %Y, %H:%M UTC') }}</p>{% endif %}
+        {% if complaint.has_coordinates %}
+        <div id="detail-map" class="mini-map" data-lat="{{ complaint.latitude }}" data-lng="{{ complaint.longitude }}"></div>
+        {% endif %}
+    </article>
+</div>
+
+<section class="card">
+    <h2>Status history</h2>
+    <ol class="history">
+        {% for event in complaint.history %}
+        <li>
+            <strong>{{ event.status }}</strong>
+            <span>{{ event.created_at.strftime('%d %b %Y, %H:%M UTC') }}</span>
+            <p>{{ event.message }}</p>
+        </li>
+        {% endfor %}
+    </ol>
+</section>
+
+{% if admin_mode %}
+<section class="card">
+    <h2>Administrator actions</h2>
+    <form method="post" class="stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="assign">
+        <label for="worker_id">Assign to worker</label>
+        <select id="worker_id" name="worker_id" required>
+            {% for worker in workers %}
+            <option value="{{ worker.id }}" {% if complaint.assigned_worker_id == worker.id %}selected{% endif %}>{{ worker.full_name }} ({{ worker.role }})</option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-primary" type="submit">Assign</button>
+    </form>
+    <form method="post" class="stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="status">
+        <label for="status">Update status</label>
+        <select id="status" name="status">
+            {% for status in statuses %}
+            <option value="{{ status }}" {% if complaint.status == status %}selected{% endif %}>{{ status }}</option>
+            {% endfor %}
+        </select>
+        <label for="admin_note">Administrative note</label>
+        <textarea id="admin_note" name="admin_note" rows="3">{{ complaint.admin_notes or '' }}</textarea>
+        <button class="btn btn-secondary" type="submit">Save status</button>
+    </form>
+    <form method="post" enctype="multipart/form-data" class="stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="resolution">
+        <label for="resolution_photo">Upload resolution photograph</label>
+        <input id="resolution_photo" name="resolution_photo" type="file" accept="image/jpeg,image/png,image/webp" required>
+        <label for="resolution_note">Resolution note</label>
+        <textarea id="resolution_note" name="resolution_note" rows="3"></textarea>
+        <button class="btn btn-primary" type="submit">Save evidence</button>
+        <p class="muted">This photograph is staff-submitted evidence, not independently verified proof.</p>
+    </form>
+</section>
+{% endif %}
+
+{% if worker_mode %}
+<section class="card">
+    <h2>Worker actions</h2>
+    <form method="post" class="stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="status">
+        <label for="wstatus">Update status</label>
+        <select id="wstatus" name="status">
+            <option value="Assigned">Assigned</option>
+            <option value="In Progress">In Progress</option>
+        </select>
+        <button class="btn btn-secondary" type="submit">Save status</button>
+    </form>
+    <form method="post" enctype="multipart/form-data" class="stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="resolve">
+        <label for="wphoto">Resolution photograph (required to resolve)</label>
+        <input id="wphoto" name="resolution_photo" type="file" accept="image/jpeg,image/png,image/webp" required>
+        <label for="wnote">Resolution note</label>
+        <textarea id="wnote" name="resolution_note" rows="3" required></textarea>
+        <button class="btn btn-primary" type="submit">Submit resolution evidence</button>
+        <p class="muted">Labelled as worker-submitted evidence, not independently verified proof.</p>
+    </form>
+</section>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const mapBox = document.getElementById("detail-map");
+    if (mapBox && window.L) {
+        const lat = parseFloat(mapBox.dataset.lat);
+        const lng = parseFloat(mapBox.dataset.lng);
+        const map = L.map(mapBox).setView([lat, lng], 15);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(map);
+        L.marker([lat, lng]).addTo(map);
+    }
+</script>
+{% endblock %}

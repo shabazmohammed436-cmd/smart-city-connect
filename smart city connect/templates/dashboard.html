@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | SmartCity Connect{% endblock %}
+{% block content %}
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">Hello, {{ current_user.full_name.split()[0] }}</p>
+        <h1>Welcome back! Let's make our city better together.</h1>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('complaints.my_complaints') }}">My Complaints</a>
+</section>
+
+<section class="stats-grid" aria-label="Your complaint statistics">
+    <article class="card stat"><span>Total submitted</span><strong>{{ stats.total }}</strong></article>
+    <article class="card stat"><span>Pending / reopened</span><strong>{{ stats.pending }}</strong></article>
+    <article class="card stat"><span>Assigned or in progress</span><strong>{{ stats.in_progress }}</strong></article>
+    <article class="card stat"><span>Resolved</span><strong>{{ stats.resolved }}</strong></article>
+</section>
+
+<section>
+    <h2>Report a problem</h2>
+    <div class="category-grid">
+        {% for item in categories %}
+        <article class="card category-card">
+            <div class="icon-badge icon-{{ item.icon }}" aria-hidden="true"></div>
+            <h3>{{ item.label }}</h3>
+            <p>{{ item.description }}</p>
+            <a class="btn btn-primary" href="{{ url_for('complaints.report_complaint', category=item.key) }}">Report Now</a>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="card">
+    <h2>Recent activity</h2>
+    {% if recent %}
+        <ul class="activity">
+            {% for item in recent %}
+            <li>
+                <a href="{{ url_for('complaints.complaint_details', public_id=item.public_id) }}">{{ item.public_id }}</a>
+                <span>{{ item.category_label }}</span>
+                <span class="status status-{{ item.status|replace(' ', '-')|lower }}">{{ item.status }}</span>
+                {% if item.is_demo %}<span class="tag">Demo data</span>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>You have not submitted any complaints yet. Choose a category above to start.</p>
+    {% endif %}
+</section>
+
+<p class="muted">{{ ai.label }}. {{ ai.detail }}</p>
+{% endblock %}
